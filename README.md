@@ -1,1 +1,161 @@
 # index.html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Graphique des scores factoriels</title>
+<style>
+  :root {
+    --bg: #f6f8fc;
+    --card-bg: #ffffff;
+    --border: #e3e8f2;
+    --text: #1f2937;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #f8fbff 0%, #eef2ff 100%);
+    color: var(--text);
+    padding: 24px;
+  }
+  .wrap {
+    max-width: 1150px;
+    margin: 0 auto;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .controls label {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  select {
+    font-size: 14px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    min-width: 170px;
+    outline: none;
+  }
+  .card {
+    background: rgba(255,255,255,0.96);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 82vh;
+    min-height: 540px;
+  }
+  @media (max-width: 700px) {
+    body { padding: 14px; }
+    .topbar { flex-direction: column; align-items: flex-start; }
+    .chart-container { height: 72vh; min-height: 460px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="controls">
+        <label for="factorSelect">Variable</label>
+        <select id="factorSelect"></select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chart-container">
+        <canvas id="factorChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const data = {
+"E1.B":{hi:[["Rwanda",6.128],["Latvia",3.583],["Angola",3.402],["Belize",3.176],["Malaysia",2.527],["Ukraine",2.327],["Australia",2.246],["Bulgaria",2.099],["Cambodia",1.937],["Palau",1.672]],lo:[["Nepal",-0.722],["Sao Tome and Principe",-0.716],["Bahamas, The",-0.716],["Congo, Dem. Rep.",-0.712],["Mauritania",-0.708],["China",-0.706],["Hungary",-0.705],["Turkmenistan",-0.702],["Myanmar",-0.698],["Estonia",-0.696]]},
+"E2.B":{hi:[["Burkina Faso",2.018],["China",1.949],["Estonia",1.889],["Norway",1.886],["Turkmenistan",1.875],["Bahamas, The",1.793],["Turkiye",1.754],["Yemen, Rep.",1.735],["Myanmar",1.723],["Cabo Verde",1.711]],lo:[["Venezuela, RB",-1.273],["Malta",-1.194],["Tanzania",-1.188],["Oman",-1.179],["Ireland",-1.152],["Slovenia",-1.142],["Dominican Republic",-1.135],["Palau",-1.135],["Saudi Arabia",-1.115],["Bulgaria",-1.105]]},
+"E3.B":{hi:[["Monaco",1.719],["Barbados",1.636],["Serbia",1.574],["Czechia",1.492],["Sweden",1.454],["South Africa",1.449],["Greece",1.414],["Angola",1.407],["Namibia",1.366],["Ghana",1.361]],lo:[["Cambodia",-1.653],["San Marino",-1.573],["Israel",-1.537],["North Macedonia",-1.529],["Eswatini",-1.491],["St. Lucia",-1.489],["Korea, Dem. People's Rep.",-1.377],["Lithuania",-1.369],["Cameroon",-1.369],["Andorra",-1.365]]},
+"E4.B":{hi:[["Uganda",1.944],["Viet Nam",1.799],["Kenya",1.776],["Saudi Arabia",1.774],["Madagascar",1.669],["Sao Tome and Principe",1.631],["Mozambique",1.619],["Suriname",1.605],["Bahamas, The",1.563],["Marshall Islands",1.557]],lo:[["Spain",-1.630],["Benin",-1.605],["Seychelles",-1.600],["Bulgaria",-1.551],["Poland",-1.535],["North Macedonia",-1.533],["Sierra Leone",-1.499],["Grenada",-1.494],["Egypt, Arab Rep.",-1.494],["Palau",-1.465]]},
+"E5.B":{hi:[["Spain",2.430],["Guyana",2.274],["Finland",2.175],["France",2.162],["Sierra Leone",2.113],["Grenada",2.094],["Philippines",2.064],["Liberia",1.767],["Poland",1.702],["Eswatini",1.544]],lo:[["Egypt, Arab Rep.",-1.291],["Namibia",-1.272],["Czechia",-1.270],["Madagascar",-1.254],["Oman",-1.244],["Venezuela, RB",-1.241],["Afghanistan",-1.234],["Belize",-1.219],["Libya",-1.215],["Palau",-1.205]]},
+"S1.B":{hi:[["Oman",1.248],["Tanzania",1.010],["Suriname",1.003],["Lithuania",0.947],["Slovenia",0.884],["Latvia",0.883],["Saudi Arabia",0.879],["Egypt, Arab Rep.",0.878],["Italy",0.874],["Eritrea",0.871]],lo:[["Kuwait",-1.775],["Sierra Leone",-1.719],["Finland",-1.704],["Uzbekistan",-1.694],["Turkiye",-1.596],["South Sudan",-1.588],["Poland",-1.587],["Lebanon",-1.566],["Hungary",-1.557],["Mauritania",-1.553]]},
+"S2.B":{hi:[["Malta",3.550],["Kazakhstan",2.571],["Jamaica",2.197],["Belgium",1.987],["Cyprus",1.962],["Guatemala",1.960],["Romania",1.884],["Maldives",1.802],["Honduras",1.737],["St. Lucia",1.726]],lo:[["Angola",-1.726],["Rwanda",-1.644],["Latvia",-1.466],["Belize",-1.374],["Saudi Arabia",-1.290],["Palau",-1.223],["Oman",-1.208],["Jordan",-1.095],["Bulgaria",-1.058],["Micronesia, Fed. Sts.",-1.023]]},
+"S3.B":{hi:[["Nepal",3.190],["Sao Tome and Principe",2.197],["Mauritania",2.135],["France",2.116],["Norway",1.916],["New Zealand",1.897],["Switzerland",1.719],["Malta",1.604],["Singapore",1.546],["Thailand",1.540]],lo:[["Solomon Islands",-4.626],["Czechia",-3.563],["Panama",-2.031],["Grenada",-1.968],["Monaco",-1.939],["Barbados",-1.938],["Senegal",-1.846],["Poland",-1.792],["Lesotho",-1.775],["South Africa",-1.678]]},
+"S4.B":{hi:[["Mauritania",1.743],["Turkiye",1.669],["Sierra Leone",1.563],["Israel",1.559],["Rwanda",1.518],["Estonia",1.360],["Myanmar",1.291],["Bahamas, The",1.291],["Cameroon",1.213],["Sudan",1.188]],lo:[["Finland",-2.774],["Czechia",-2.487],["Tunisia",-2.449],["Solomon Islands",-2.335],["Jordan",-2.035],["Philippines",-2.002],["Venezuela, RB",-1.986],["Norway",-1.828],["Micronesia, Fed. Sts.",-1.787],["Oman",-1.768]]},
+"S5.B":{hi:[["Malta",2.828],["Uruguay",2.440],["Kazakhstan",2.282],["Luxembourg",2.188],["Lao PDR",2.028],["Mauritius",1.987],["Seychelles",1.870],["Syrian Arab Republic",1.839],["Belarus",1.734],["Central African Republic",1.726]],lo:[["Oman",-3.221],["Micronesia, Fed. Sts.",-2.782],["Kuwait",-2.474],["Tunisia",-2.390],["Philippines",-2.179],["Timor-Leste",-1.985],["Finland",-1.869],["Vanuatu",-1.832],["Lithuania",-1.520],["Ireland",-1.270]]},
+"S6.B":{hi:[["Viet Nam",2.463],["Brazil",2.258],["Comoros",2.191],["Papua New Guinea",2.148],["Haiti",1.978],["Bosnia and Herzegovina",1.944],["New Zealand",1.922],["Burundi",1.788],["Costa Rica",1.747],["Russian Federation",1.702]],lo:[["Qatar",-1.682],["Malta",-1.608],["Rwanda",-1.549],["Estonia",-1.547],["Palau",-1.488],["Panama",-1.477],["Singapore",-1.401],["Thailand",-1.387],["Liberia",-1.322],["Azerbaijan",-1.212]]},
+"G1.B":{hi:[["Solomon Islands",2.904],["Sweden",2.830],["Singapore",2.752],["Liberia",2.395],["Cabo Verde",2.294],["Greece",2.222],["Monaco",2.156],["China",2.117],["Bahamas, The",1.971],["Albania",1.942]],lo:[["Cote d'Ivoire",-1.139],["Bhutan",-1.100],["Luxembourg",-1.024],["Costa Rica",-0.957],["Libya",-0.936],["Central African Republic",-0.924],["Guatemala",-0.917],["Jamaica",-0.904],["Nauru",-0.901],["Syrian Arab Republic",-0.898]]},
+"G2.B":{hi:[["Bahamas, The",1.702],["Myanmar",1.673],["Singapore",1.645],["South Africa",1.527],["Albania",1.412],["China",1.374],["Tanzania",1.286],["Colombia",1.278],["Mauritania",1.252],["Turkiye",1.248]],lo:[["Finland",-2.755],["Philippines",-2.592],["Tunisia",-2.283],["Ireland",-2.019],["Oman",-2.000],["Iraq",-1.937],["Jordan",-1.922],["Dominican Republic",-1.912],["Armenia",-1.826],["Suriname",-1.810]]},
+"G3.B":{hi:[["Seychelles",2.028],["Eswatini",1.868],["Djibouti",1.845],["Nigeria",1.791],["Cameroon",1.784],["Pakistan",1.749],["St. Lucia",1.723],["Malaysia",1.723],["Cambodia",1.693],["North Macedonia",1.678]],lo:[["Solomon Islands",-1.993],["Qatar",-1.857],["South Africa",-1.813],["El Salvador",-1.518],["China",-1.461],["Tanzania",-1.429],["Libya",-1.387],["Afghanistan",-1.379],["Montenegro",-1.370],["Zambia",-1.323]]},
+"G4.B":{hi:[["North Macedonia",1.533],["Pakistan",1.499],["St. Lucia",1.487],["Djibouti",1.485],["Eswatini",1.478],["Cameroon",1.453],["Nigeria",1.442],["Malaysia",1.434],["Cambodia",1.389],["Israel",1.348]],lo:[["Qatar",-1.955],["Tanzania",-1.839],["El Salvador",-1.807],["Solomon Islands",-1.693],["United Arab Emirates",-1.646],["Grenada",-1.636],["Suriname",-1.590],["Senegal",-1.530],["Montenegro",-1.511],["Saudi Arabia",-1.510]]},
+"G5.B":{hi:[["Ukraine",9.040],["Central African Republic",6.549],["Kazakhstan",2.551],["Cyprus",1.794],["Gabon",1.716],["Indonesia",1.281],["Fiji",1.064],["Jamaica",0.856],["Lao PDR",0.772],["Cambodia",0.693]],lo:[["Malta",-0.522],["Bhutan",-0.503],["Costa Rica",-0.499],["Mongolia",-0.496],["Latvia",-0.495],["Andorra",-0.491],["Croatia",-0.487],["Lithuania",-0.486],["Malaysia",-0.478],["Belize",-0.465]]},
+"G6.B":{hi:[["Eswatini",2.007],["Djibouti",1.973],["Pakistan",1.947],["North Macedonia",1.908],["St. Lucia",1.903],["Cameroon",1.861],["Seychelles",1.811],["Malaysia",1.807],["Nigeria",1.791],["Israel",1.775]],lo:[["Solomon Islands",-1.923],["South Africa",-1.633],["Afghanistan",-1.535],["China",-1.530],["Ireland",-1.440],["Cabo Verde",-1.315],["Sweden",-1.314],["Senegal",-1.303],["United States",-1.295],["Venezuela, RB",-1.279]]},
+"PHI":{hi:[["Tuvalu",1.098],["Kenya",1.087],["Belgium",1.086],["Guatemala",1.079],["Azerbaijan",1.075],["Cuba",1.072],["Malawi",1.072],["Argentina",1.071],["Malta",1.070],["Bolivia",1.069]],lo:[["Finland",0.914],["Norway",0.940],["South Sudan",0.941],["Kuwait",0.947],["Burkina Faso",0.948],["Congo, Dem. Rep.",0.951],["Tunisia",0.951],["Uzbekistan",0.954],["Yemen, Rep.",0.960],["Sao Tome and Principe",0.961]]}
+};
+
+const sel = document.getElementById('factorSelect');
+Object.keys(data).forEach(k => {
+  const o = document.createElement('option');
+  o.value = k;
+  o.textContent = k;
+  sel.appendChild(o);
+});
+sel.value = "E1.B";
+
+const canvas = document.getElementById('factorChart');
+const ctx = canvas.getContext('2d');
+let chart;
+
+function render(key) {
+  const d = data[key];
+  const combined = [...d.hi.slice().reverse(), ...d.lo.slice().reverse()];
+  const labels = combined.map(x => x[0]);
+  const values = combined.map(x => x[1]);
+  const colors = values.map(v => v >= 0 ? '#2563eb' : '#ef4444');
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderRadius: 6, barThickness: 16 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      devicePixelRatio: Math.max(window.devicePixelRatio || 1, 2),
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (c) => c.parsed.x.toFixed(3) } }
+      },
+      scales: {
+        x: { grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280', font: { size: 12 } } },
+        y: { grid: { display: false }, ticks: { color: '#374151', font: { size: 12 } } }
+      }
+    }
+  });
+}
+
+render('E1.B');
+sel.addEventListener('change', (e) => render(e.target.value));
+</script>
+</body>
+</html>
